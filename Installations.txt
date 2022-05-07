@@ -1,0 +1,61 @@
+#FFMPEG on Jetson nano.
+#1.Update and Upgrade.
+sudo apt-get update && sudo apt-get upgrade
+#2.install required packages for ffmpeg
+sudo apt-get install cmake libfreetype-dev v4l-utils build-essential pkg-config
+#extra package for carrier board
+sudo apt-get install nvidia-l4t-jetson-multimedia-api
+#3.jetson-ffmpeg (jcover)
+git clone https://github.com/jocover/jetson-ffmpeg.git
+cd jetson-ffmpeg
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
+sudo ldconfig
+cd $HOME/jetson-ffmpeg/
+git clone git://source.ffmpeg.org/ffmpeg.git -b release/4.2 --depth=1
+cd ffmpeg
+wget https://github.com/jocover/jetson-ffmpeg/raw/master/ffmpeg_nvmpi.patch
+git apply ffmpeg_nvmpi.patch
+./configure --enable-nvmpi --enable-libfreetype
+make
+sudo make install
+#4.install v4l2-loopback
+sudo apt-get install libelf-dev unzip
+wget https://github.com/umlaeute/v4l2loopback/archive/master.zip
+unzip master.zip
+cd v4l2loopback-master
+make
+sudo make install
+sudo depmod -a
+sudo modprobe v4l2loopback
+#5.install motioneye
+sudo apt-get install motion -y
+sudo apt-get install python-pip python-dev curl libssl-dev libcurl4-openssl-dev libjpeg-dev -y
+sudo pip install motioneye
+sudo  mkdir -p /etc/motioneye
+sudo cp /usr/local/share/motioneye/extra/motioneye.conf.sample /etc/motioneye/motioneye.conf
+sudo mkdir -p /var/lib/motioneye
+sudo cp /usr/local/share/motioneye/extra/motioneye.systemd-unit-local /etc/systemd/system/motioneye.service
+sudo systemctl daemon-reload
+sudo systemctl enable motioneye
+sudo systemctl start motioneye
+sudo pip install motioneye --upgrade
+sudo systemctl restart motioneye
+#6.Mediapipe
+#6.1 install python3.7
+sudo apt-get install python3.7
+sudo apt-get install python3.7-dev
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 2
+sudo update-alternatives --config python3
+sudo apt-get remove python3-numpy
+sudo pip3 install pip --upgrade
+sudo pip3 install cython
+sudo pip3 install numpy
+sudo pip3 install pillow
+sudo pip3 install setuptools --upgrade
+sudo pip3 install scikit-build
+sudo pip3 install opencv-contrib-python
